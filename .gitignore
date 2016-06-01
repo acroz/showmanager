@@ -1,0 +1,8 @@
+# Text editor files
+.*.swp
+
+# Python Bytecode files
+*.pyc
+
+# Testing databases
+*.db

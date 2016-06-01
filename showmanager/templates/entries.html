@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Entries{% endblock %}
+{% block body %}
+	<h1>Show Entries</h1>
+	<ul>
+	{% for e in entries %}
+		<li>{{ e.handler }} running {{ e.dog }}</li>
+	{% endfor %}
+	</ul>
+{% endblock %}
