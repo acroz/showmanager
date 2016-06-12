@@ -1,7 +1,7 @@
 
 import os
 import flask
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 #from flask.ext.login import LoginManager
 
 # Create the flask app

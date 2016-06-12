@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% from "_formhelpers.html" import render_field %}
+{% block title %}Registration - {{ show.name }}{% endblock %}
+{% block body %}
+	<h1>Registration - {{ show.name }}</h1>
+    <p>{{ show.date_string }}</p>
+    <form method=post action="{{ url_for('register', show_id=show.id) }}">
+      <dl>
+        {{ render_field(form.handler) }}
+        {{ render_field(form.dog) }}
+        {% for class in show.classes %}
+            {{ render_field(form[class.id_string]) }}
+        {% endfor %}
+      </dl>
+      <p><input type=submit value=Register>
+    </form>
+{% endblock %}

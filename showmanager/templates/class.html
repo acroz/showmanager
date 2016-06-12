@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}{{ clss.show.name }} - {{ clss.name }}{% endblock %}
+{% block body %}
+    <h1>{{ clss.show.name }} - {{ clss.name }}</h1>
+    <p><a href="{{ url_for('show', id=clss.show.id) }}">{{ clss.show.name }}</a></p>
+    <h2>Entries</h2>
+	<ul>
+	{% for entry in clss.entries %}
+        {% set r = entry.registrant %}
+        <li>{{ r.handler }} with {{ r.dog }}</li>
+	{% endfor %}
+	</ul>
+{% endblock %}
