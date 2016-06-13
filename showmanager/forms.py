@@ -1,5 +1,13 @@
 
-from wtforms import Form, BooleanField, StringField, validators
+from wtforms import (Form, BooleanField, StringField, DateField, DateTimeField,
+                     validators)
+
+class ShowForm(Form):
+    name = StringField('Name', [validators.DataRequired()])
+    start = DateField('Start', [validators.DataRequired()])
+    end   = DateField('End', [validators.DataRequired()])
+    registration_start = DateTimeField('Registration Opens')
+    registration_end   = DateTimeField('Registration Closes')
 
 def entry_form(show):
     """

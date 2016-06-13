@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% from "_formhelpers.html" import render_field %}
+{% block title %}Edit - {{ show.name }}{% endblock %}
+{% block body %}
+	<h1>Edit - {{ show.name }}</h1>
+    <form method=post action="{{ url_for('show_edit', id=show.id) }}">
+      <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.start) }}
+        {{ render_field(form.end) }}
+        {{ render_field(form.registration_start) }}
+        {{ render_field(form.registration_end) }}
+      </dl>
+      <p><input type=submit value=Submit>
+    </form>
+{% endblock %}

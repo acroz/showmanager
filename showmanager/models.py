@@ -1,12 +1,17 @@
 
 from .app import db
+from datetime import datetime
 
 class Show(db.Model):
+
     __tablename__ = 'shows'
+
     id   = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    datestart = db.Column(db.Date)
-    dateend   = db.Column(db.Date)
+    start = db.Column(db.Date, nullable=False)
+    end   = db.Column(db.Date, nullable=False)
+    registration_start = db.Column(db.DateTime)
+    registration_end   = db.Column(db.DateTime)
 
     @property
     def date_string(self):
@@ -15,6 +20,13 @@ class Show(db.Model):
         else:
             tpl = '{:%d/%m/%Y} - {:%d/%m/%Y}'
             return tpl.format(self.datestart, self.dateend)
+
+    @property
+    def registration_open(self):
+        if self.registration_start is None or self.registration_end is None:
+            return False
+        now = datetime.now()
+        return self.registration_start <= now <= self.registration_end
 
 class Class(db.Model):
     __tablename__ = 'classes'
@@ -49,11 +61,20 @@ def populate():
     """
     Temporary for development: Populate some data
     """
-    from datetime import date
-    show = Show(name='Winter League', datestart=date(2016, 6, 10),
-                dateend=date(2016, 6, 10))
+    from datetime import date, datetime
+    show = Show(name='Winter League',
+                start=date(2016, 7, 10),
+                end=date(2016, 7, 10),
+                registration_start=datetime(2016, 6, 1),
+                registration_end=datetime(2016, 6, 30))
+    show_closed = Show(name='Closed show',
+                       start=date(2016, 6, 10),
+                       end=date(2016, 6, 10),
+                       registration_start=datetime(2016, 5, 1),
+                       registration_end=datetime(2016, 5, 30))
     clss = Class(show=show, name='Agility')
-    db.session.add_all([show, clss])
+    clss_closed = Class(show=show_closed, name='Agility')
+    db.session.add_all([show, show_closed, clss, clss_closed])
     longname = 'really ' * 30
     regs = [Registrant(handler='Some guy with a super duper long name',
                        dog='Really ' + longname + 'long name'),

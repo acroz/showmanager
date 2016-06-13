@@ -1,8 +1,10 @@
 
-from flask import render_template, make_response, request, abort, redirect, url_for, flash
+from flask import (render_template, make_response, request, abort, redirect,
+                   url_for, flash)
+from sqlalchemy.orm.exc import NoResultFound
 from .app import app, db
 from .models import Show, Class, Registrant, Entry
-from .forms import entry_form
+from .forms import ShowForm, entry_form
 from .chits import chits as chitgen
 
 @app.route('/')
@@ -18,6 +20,38 @@ def show(id):
     except NoResultFound:
         abort(404)
     return render_template('show.html', show=show)
+
+@app.route('/show/<int:id>/edit', methods=['GET', 'POST'])
+def show_edit(id):
+    query = Show.query.filter_by(id=id)
+    try:
+        show = query.one()
+    except NoResultFound:
+        abort(404)
+
+    form = ShowForm()
+
+    # Populate form
+    form.name.data = show.name
+    form.start.data = show.start
+    form.end.data = show.end
+    form.registration_start.data = show.registration_start
+    form.registration_end.data = show.registration_end
+
+    # Handle submitted data
+    if request.method == 'POST' and form.validate():
+
+        # Update record
+        show.name = form.name.data
+        show.start = form.start.data
+        show.end   = form.end.data
+        show.registration_start = form.registration_start.data
+        show.registration_end   = form.registration_end.data
+        db.session.commit()
+
+        return redirect(url_for('show', id=show.id))
+
+    return render_template('show_edit.html', form=form, show=show)
 
 @app.route('/class/<int:id>')
 def clss(id):
@@ -36,6 +70,10 @@ def register(show_id):
         show = query.one()
     except NoResultFound:
         abort(404)
+
+    if not show.registration_open:
+        flash('Sorry, registration for this show is closed')
+        return redirect(url_for('show', id=show.id))
 
     # Build form
     EntryForm = entry_form(show)
