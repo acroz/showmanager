@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import "bootstrap/utils.html" as utils %}
 {% block title %}{{ show.name }}{% endblock %}
 {% block pagecontent %}
   <h1>{{ show.name }}</h1>
@@ -20,4 +21,17 @@
     <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
   {% endfor %}
   </ul>
+  <h2>Chits etc.</h2>
+  {% if show.numbering_up_to_date %}
+    <p>Chit numbering is up to date.</p>
+    <p>{{ utils.form_button(url_for('show_number', id=show.id),
+                            utils.icon('hash') + 'Ressign Numbering') }}</p>
+    <p>{{ utils.form_button(url_for('show_chits', id=show.id),
+                            utils.icon('paper') + 'Generate Chits',
+                            method='get') }}</p>
+  {% else %}
+    <p>Chit numbering is not up to date.</p>
+    <p>{{ utils.form_button(url_for('show_number', id=show.id),
+                            utils.icon('hash') + 'Assign Numbering') }} </p>
+  {% endif %}
 {% endblock %}

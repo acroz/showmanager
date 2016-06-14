@@ -13,6 +13,9 @@ class Show(db.Model):
     registration_start = db.Column(db.DateTime)
     registration_end   = db.Column(db.DateTime)
 
+    last_entry = db.Column(db.DateTime, default=datetime.utcnow)
+    numbering_assigned = db.Column(db.DateTime)
+
     @property
     def date_string(self):
         if self.start == self.end:
@@ -25,8 +28,19 @@ class Show(db.Model):
     def registration_open(self):
         if self.registration_start is None or self.registration_end is None:
             return False
-        now = datetime.now()
+        now = datetime.utcnow()
         return self.registration_start <= now <= self.registration_end
+
+    @property
+    def numbering_up_to_date(self):
+        if self.last_entry is None or self.numbering_assigned is None:
+            return False
+        return self.last_entry < self.numbering_assigned
+
+    def assign_numbering(self):
+        for clss in self.classes:
+            clss.assign_numbering()
+        self.numbering_assigned = datetime.utcnow()
 
 class Class(db.Model):
     __tablename__ = 'classes'
@@ -34,6 +48,13 @@ class Class(db.Model):
     name    = db.Column(db.String)
     show_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
     show    = db.relationship('Show', backref=db.backref('classes', order_by=id))
+
+    def assign_numbering(self):
+        query = Entry.query.join(Registrant) \
+                           .filter(Entry.clss == self) \
+                           .order_by(Registrant.handler)
+        for i, entry in enumerate(query.all()):
+            entry.number = i + 1
 
 class Registrant(db.Model):
     __tablename__ = 'registrants'
@@ -48,6 +69,7 @@ class Entry(db.Model):
     registrant    = db.relationship('Registrant', backref=db.backref('entries', order_by=id))
     clss_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
     clss    = db.relationship('Class', backref=db.backref('entries', order_by=id))
+    number = db.Column(db.Integer)
 
 def initialise():
     """Create the schema"""

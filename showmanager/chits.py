@@ -130,7 +130,7 @@ def chits(entries, tiled=False):
     styles.add(right10)
     
     # Loop over all entries
-    for i, entry in enumerate(entries):
+    for entry in entries:
 
         # Start at margin
         vpos = MARGIN
@@ -140,7 +140,7 @@ def chits(entries, tiled=False):
 
         # First row, add dog number and class name
         f = frame(canvas, vpos, hnormal, horizontal=(0,0.5))
-        frame_add_text(canvas, f, 'Dog No: {}'.format(i), styles['Normal'])
+        frame_add_text(canvas, f, 'Dog No: {}'.format(entry.number), styles['Normal'])
         f = frame(canvas, vpos, hnormal, horizontal=(0.5,1))
         frame_add_text(canvas, f, entry.clss.name, styles['Right'])
         vpos += hnormal
