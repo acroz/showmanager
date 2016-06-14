@@ -15,11 +15,11 @@ class Show(db.Model):
 
     @property
     def date_string(self):
-        if self.datestart == self.dateend:
-            return '{:%d/%m/%Y}'.format(self.datestart)
+        if self.start == self.end:
+            return '{:%d/%m/%Y}'.format(self.start)
         else:
             tpl = '{:%d/%m/%Y} - {:%d/%m/%Y}'
-            return tpl.format(self.datestart, self.dateend)
+            return tpl.format(self.start, self.end)
 
     @property
     def registration_open(self):
@@ -34,10 +34,6 @@ class Class(db.Model):
     name    = db.Column(db.String)
     show_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
     show    = db.relationship('Show', backref=db.backref('classes', order_by=id))
-
-    @property
-    def id_string(self):
-        return 'class_{}'.format(self.id)
 
 class Registrant(db.Model):
     __tablename__ = 'registrants'

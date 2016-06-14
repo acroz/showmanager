@@ -1,11 +1,26 @@
 
 import os
 import flask
+from flask_bootstrap import Bootstrap
+from flask_nav import Nav
+from flask_nav.elements import Navbar, View
 from flask_sqlalchemy import SQLAlchemy
 #from flask.ext.login import LoginManager
 
 # Create the flask app
 app = flask.Flask(__name__)
+
+# Add bootstrap templates
+Bootstrap(app)
+
+# Create navbar
+nav = Nav()
+@nav.navigation()
+def topbar():
+    bar = Navbar('ShowManager',
+                 View('Shows', 'shows'))
+    return bar
+nav.init_app(app)
 
 # Add the database
 dirname = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

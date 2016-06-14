@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{# Append to stylesheets #}
+{% block styles scoped %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('.static', filename='bootstrap-datetimepicker.min.css') }}">
+{% endblock %}
+
+{# Append to scripts #}
+{% block scripts scoped %}
+{{ super() }}
+<script src="{{ url_for('.static', filename='moment.min.js')}}"></script>
+<script src="{{ url_for('.static', filename='bootstrap-datetimepicker.min.js')}}"></script>
+<script type="text/javascript">
+  $(function () {
+    // Set up all date pickers
+    $('.datepicker').each(function(index, element) {
+      var current = $(this).find('input').val();
+      $(this).datetimepicker({
+        format: 'YYYY-MM-DD'
+      });
+      $(this).data('DateTimePicker').date(moment(current));
+    });
+    // Set up all datetime pickers
+    $('.datetimepicker').each(function(index, element) {
+      var current = $(this).find('input').val();
+      $(this).datetimepicker({
+        format: 'YYYY-MM-DD HH:mm:ss'
+      });
+      $(this).data('DateTimePicker').date(moment(current));
+    });
+  });
+</script>
+{% endblock %}

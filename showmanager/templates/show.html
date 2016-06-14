@@ -1,23 +1,23 @@
 {% extends "layout.html" %}
 {% block title %}{{ show.name }}{% endblock %}
-{% block body %}
-    <h1>{{ show.name }}</h1>
-    <p>{{ show.date_string }}</p>
-    <p><a href="{{ url_for('shows') }}">All shows</a></p>
-    <p>
-        {% if show.registration_open %} 
-            <a href="{{ url_for('register', show_id=show.id) }}">
-                Register for this show
-            </a>
-        {% else %}
-            Registration for this show is closed.
-        {% endif %}
-    </p>
-    <p><a href="{{ url_for('show_edit', id=show.id) }}">Edit show</a></p>
-    <h2>Classes</h2>
-	<ul>
-	{% for class in show.classes %}
-        <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
-	{% endfor %}
-	</ul>
+{% block pagecontent %}
+  <h1>{{ show.name }}</h1>
+  <p>{{ show.date_string }}</p>
+  <p><a href="{{ url_for('shows') }}">All shows</a></p>
+  <p>
+    {% if show.registration_open %} 
+      <a href="{{ url_for('register', id=show.id) }}">
+          Register for this show
+      </a>
+    {% else %}
+      Registration for this show is closed.
+    {% endif %}
+  </p>
+  <p><a href="{{ url_for('show_edit', id=show.id) }}">Edit show</a></p>
+  <h2>Classes</h2>
+  <ul>
+  {% for class in show.classes %}
+    <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
+  {% endfor %}
+  </ul>
 {% endblock %}
