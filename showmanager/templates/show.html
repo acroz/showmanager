@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 {% import "bootstrap/utils.html" as utils %}
 {% block title %}{{ show.name }}{% endblock %}
 {% block pagecontent %}
@@ -25,10 +26,22 @@
   {% if show.numbering_up_to_date %}
     <p>Chit numbering is up to date.</p>
     <p>{{ utils.form_button(url_for('show_number', id=show.id),
-                            utils.icon('hash') + 'Ressign Numbering') }}</p>
-    <p>{{ utils.form_button(url_for('show_chits', id=show.id),
-                            utils.icon('paper') + 'Generate Chits',
-                            method='get') }}</p>
+                            utils.icon('wrench') + ' Reassign Numbering',
+                            class='btn btn-default') }}</p>
+    <div class="btn-group">
+      <a class="btn btn-default" role="button"
+         href="{{ url_for('show_chits', id=show.id) }}">
+        {{ utils.icon('download') }} Generate Chits
+      </a>
+      <button type="button" class="btn btn-default dropdown-toggle"
+              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu">
+        <li><a href="{{ url_for('show_chits', id=show.id) }}">A6 (Default)</a></li>
+        <li><a href="{{ url_for('show_chits', id=show.id, tiled=1) }}">A4 (Tiled)</a></li>
+      </ul>
+    </div>
   {% else %}
     <p>Chit numbering is not up to date.</p>
     <p>{{ utils.form_button(url_for('show_number', id=show.id),

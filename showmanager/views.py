@@ -6,7 +6,7 @@ from datetime import datetime
 
 from .app import app, db
 from .models import Show, Class, Registrant, Entry
-from .forms import ShowForm, entry_form
+from . import forms
 from .chits import chits as chitgen
 
 @app.route('/')
@@ -43,7 +43,7 @@ def show_edit(id):
     except NoResultFound:
         abort(404)
 
-    form = ShowForm()
+    form = forms.ShowForm()
 
     # Handle submitted data
     if request.method == 'POST' and form.validate():
@@ -83,7 +83,7 @@ def register(id):
         return redirect(url_for('show', id=show.id))
 
     # Build form
-    EntryForm = entry_form(show)
+    EntryForm = forms.entry_form(show)
     form = EntryForm()
     
     # Handle submitted data
