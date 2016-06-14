@@ -131,6 +131,9 @@ def chits(entries, tiled=False):
     
     # Loop over all entries
     for entry in entries:
+        
+        # Alias for compactness
+        reg = entry.registrant
 
         # Start at margin
         vpos = MARGIN
@@ -152,14 +155,25 @@ def chits(entries, tiled=False):
 
         # Second row, add the handler
         f = frame(canvas, vpos, hnormal)
-        frame_add_text(canvas, f, 'Handler: {}'.format(entry.registrant.handler), styles['Normal'])
+        frame_add_text(canvas, f, 'Handler: {}'.format(reg.handler), styles['Normal'])
         vpos += hnormal
 
         # Third row, add the dog and extra info
         f = frame(canvas, vpos, hnormal, horizontal=(0,0.75))
-        frame_add_text(canvas, f, 'Dog: {}'.format(entry.registrant.dog), styles['Normal'])
+        frame_add_text(canvas, f, 'Dog: {}'.format(reg.dog), styles['Normal'])
+
+        # Extra info
+        hraj1 = str(reg.size)
+        if reg.rescue:
+            hraj1 += '/R'
+        if not reg.collie:
+            hraj1 += '/A'
+        if reg.junior:
+            hraj1 += '/J'
+        if reg.grade == 1:
+            hraj1 += '/1'
         f = frame(canvas, vpos, hnormal, horizontal=(0.75,1))
-        frame_add_text(canvas, f, 'HRAJ1', styles['Right'])
+        frame_add_text(canvas, f, hraj1, styles['Right'])
         vpos += hnormal
 
 

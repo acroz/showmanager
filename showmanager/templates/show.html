@@ -45,6 +45,7 @@
   {% else %}
     <p>Chit numbering is not up to date.</p>
     <p>{{ utils.form_button(url_for('show_number', id=show.id),
-                            utils.icon('hash') + 'Assign Numbering') }} </p>
+                            utils.icon('wrench') + ' Assign Numbering',
+                            class='btn btn-default') }}</p>
   {% endif %}
 {% endblock %}

@@ -61,6 +61,11 @@ class Registrant(db.Model):
     id      = db.Column(db.Integer, primary_key=True)
     handler = db.Column(db.String)
     dog     = db.Column(db.String)
+    size    = db.Column(db.Enum('S', 'M', 'L'))
+    grade   = db.Column(db.Integer)
+    rescue  = db.Column(db.Boolean)
+    collie  = db.Column(db.Boolean)
+    junior  = db.Column(db.Boolean)
 
 class Entry(db.Model):
     __tablename__ = 'entries'
@@ -93,15 +98,22 @@ def populate():
     clss = Class(show=show, name='Agility')
     clss_closed = Class(show=show_closed, name='Agility')
     db.session.add_all([show, show_closed, clss, clss_closed])
+
     longname = 'really ' * 30
     regs = [Registrant(handler='Some guy with a super duper long name',
-                       dog='Really ' + longname + 'long name'),
-            Registrant(handler='Andrew Crozier', dog='Caffrey'),
-            Registrant(handler='Lynda Crozier', dog='Sasha'),
-            Registrant(handler='Peter Crozier', dog='Jack'),
-            Registrant(handler='Lindsay Hutchinson', dog='Elvis')]
+                       dog='Really ' + longname + 'long name',
+                       size='S', grade=1, rescue=True, collie=False, junior=True),
+            Registrant(handler='Andrew Crozier', dog='Caffrey',
+                       size='M', grade=2, rescue=False, collie=True, junior=True),
+            Registrant(handler='Lynda Crozier', dog='Sasha',
+                       size='L', grade=3, rescue=True, collie=True, junior=False),
+            Registrant(handler='Peter Crozier', dog='Jack',
+                       size='S', grade=4, rescue=False, collie=False, junior=False),
+            Registrant(handler='Lindsay Hutchinson', dog='Elvis',
+                       size='M', grade=5, rescue=True, collie=False, junior=True)]
     entries = [Entry(registrant=r, clss=clss) for r in regs]
     db.session.add_all(entries + regs)
+
     db.session.commit()
 
 if __name__ == '__main__':

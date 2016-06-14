@@ -88,13 +88,27 @@ def register(id):
     
     # Handle submitted data
     if request.method == 'POST' and form.validate():
-        reg = Registrant(handler=form.handler.data, dog=form.dog.data)
+
+        # Create new registrant
+        reg = Registrant(handler=form.handler.data,
+                         dog=form.dog.data,
+                         size=form.size.data,
+                         grade=form.grade.data,
+                         rescue=form.rescue.data,
+                         collie=(not form.abc.data),
+                         junior=form.junior.data)
+
+        # Register class entries
         entries = []
         for class_id in form.classes.data:
             entries.append(Entry(registrant=reg, clss_id=int(id)))
+
+        # Add registration to database session and update show
         db.session.add_all([reg] + entries)
         show.last_entry = datetime.utcnow()
+
         db.session.commit()
+
         flash('Thanks for registering')
         return redirect(url_for('show', id=show.id))
 
