@@ -125,10 +125,21 @@ def clss(id):
 
 @app.route('/show/<int:id>/chits')
 def show_chits(id):
-   
+
+    query = Show.query.filter_by(id=id)
+    try:
+        show = query.one()
+    except NoResultFound:
+        abort(404)
+
+    if not show.numbering_up_to_date:
+        flash('Please assign chit numbering first', 'danger')
+        return redirect(url_for('show', id=show.id))
+
     query = Entry.query.join(Class) \
                        .join(Registrant) \
-                       .filter(Show.id == id) \
+                       .filter(Class.show == show) \
+                       .order_by(Class.name) \
                        .order_by(Entry.number)
 
     data = chitgen(query.all(), 'tiled' in request.args)

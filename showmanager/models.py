@@ -97,6 +97,7 @@ def populate():
                        registration_end=datetime(2016, 5, 30))
     clss = Class(show=show, name='Agility')
     clss_closed = Class(show=show_closed, name='Agility')
+    jumping = Class(show=show, name='Jumping')
     db.session.add_all([show, show_closed, clss, clss_closed])
 
     longname = 'really ' * 30
@@ -112,6 +113,7 @@ def populate():
             Registrant(handler='Lindsay Hutchinson', dog='Elvis',
                        size='M', grade=5, rescue=True, collie=False, junior=True)]
     entries = [Entry(registrant=r, clss=clss) for r in regs]
+    entries += [Entry(registrant=r, clss=jumping) for r in regs[2:]]
     db.session.add_all(entries + regs)
 
     db.session.commit()
