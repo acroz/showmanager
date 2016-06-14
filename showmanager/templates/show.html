@@ -17,11 +17,24 @@
   </p>
   <p><a href="{{ url_for('show_edit', id=show.id) }}">Edit show</a></p>
   <h2>Classes</h2>
-  <ul>
-  {% for class in show.classes %}
-    <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
+  {% if show.league_classes|length > 0 %}
+    <h3>League</h3>
+    <ul>
+    {% for class in show.league_classes %}
+      <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% for day in show.days %}
+    {% if day.classes|length > 0 %}
+      <h3>Day - {{ day.date }}</h3>
+      <ul>
+      {% for class in day.classes %}
+        <li><a href="{{ url_for('clss', id=class.id) }}">{{ class.name }}</a></li>
+      {% endfor %}
+      </ul>
+    {% endif %}
   {% endfor %}
-  </ul>
   <h2>Chits etc.</h2>
   {% if show.numbering_up_to_date %}
     <p>Chit numbering is up to date.</p>

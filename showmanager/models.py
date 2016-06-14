@@ -1,28 +1,32 @@
 
 from .app import db
 from datetime import datetime
+from sqlalchemy.ext.hybrid import hybrid_property
 
 class Show(db.Model):
 
     __tablename__ = 'shows'
 
     id   = db.Column(db.Integer, primary_key=True)
+
     name = db.Column(db.String)
-    start = db.Column(db.Date, nullable=False)
-    end   = db.Column(db.Date, nullable=False)
     registration_start = db.Column(db.DateTime)
     registration_end   = db.Column(db.DateTime)
 
     last_entry = db.Column(db.DateTime, default=datetime.utcnow)
     numbering_assigned = db.Column(db.DateTime)
 
+    days = db.relationship('ShowDay', order_by='ShowDay.date',
+                           back_populates='show')
+    league_classes = db.relationship('Class', back_populates='league')
+
     @property
     def date_string(self):
-        if self.start == self.end:
-            return '{:%d/%m/%Y}'.format(self.start)
+        if len(self.days) == 1:
+            return '{:%d/%m/%Y}'.format(self.days[0].date)
         else:
             tpl = '{:%d/%m/%Y} - {:%d/%m/%Y}'
-            return tpl.format(self.start, self.end)
+            return tpl.format(self.days[0].date, self.days[-1].date)
 
     @property
     def registration_open(self):
@@ -37,17 +41,47 @@ class Show(db.Model):
             return False
         return self.last_entry < self.numbering_assigned
 
+    @property
+    def classes(self):
+        for day in self.days:
+            for clss in day.classes:
+                yield clss
+        for clss in self.league_classes:
+            yield clss
+
     def assign_numbering(self):
         for clss in self.classes:
             clss.assign_numbering()
         self.numbering_assigned = datetime.utcnow()
 
+class ShowDay(db.Model):
+    __tablename__ = 'showdays'
+    id      = db.Column(db.Integer, primary_key=True)
+    date    = db.Column(db.Date, nullable=False)
+
+    show_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
+    show    = db.relationship('Show', back_populates='days')
+
+    classes = db.relationship('Class', back_populates='day')
+
 class Class(db.Model):
     __tablename__ = 'classes'
     id      = db.Column(db.Integer, primary_key=True)
     name    = db.Column(db.String)
-    show_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
-    show    = db.relationship('Show', backref=db.backref('classes', order_by=id))
+    
+    # One-off classes are linked to a day
+    day_id = db.Column(db.Integer, db.ForeignKey('showdays.id'))
+    day    = db.relationship('ShowDay', back_populates='classes')
+
+    league_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
+    league    = db.relationship('Show', back_populates='league_classes')
+
+    @property
+    def show(self):
+        if self.league is not None:
+            return self.league
+        else:
+            return self.day.show
 
     def assign_numbering(self):
         query = Entry.query.join(Registrant) \
@@ -85,20 +119,26 @@ def populate():
     Temporary for development: Populate some data
     """
     from datetime import date, datetime
+
     show = Show(name='Winter League',
-                start=date(2016, 7, 10),
-                end=date(2016, 7, 10),
                 registration_start=datetime(2016, 6, 1),
                 registration_end=datetime(2016, 6, 30))
+    wld1 = ShowDay(show=show, date=date(2016, 7, 10))
+    wld2 = ShowDay(show=show, date=date(2016, 7, 17))
+    wld3 = ShowDay(show=show, date=date(2016, 7, 24))
+    db.session.add_all([show, wld1, wld2, wld3])
+
     show_closed = Show(name='Closed show',
-                       start=date(2016, 6, 10),
-                       end=date(2016, 6, 10),
                        registration_start=datetime(2016, 5, 1),
                        registration_end=datetime(2016, 5, 30))
-    clss = Class(show=show, name='Agility')
-    clss_closed = Class(show=show_closed, name='Agility')
-    jumping = Class(show=show, name='Jumping')
-    db.session.add_all([show, show_closed, clss, clss_closed])
+    cld1 = ShowDay(show=show_closed, date=date(2016, 6, 10))
+    cld2 = ShowDay(show=show_closed, date=date(2016, 6, 11))
+    db.session.add_all([show_closed, cld1, cld2])
+
+    clss = Class(league=show, name='Agility')
+    clss_closed = Class(day=cld1, name='Agility')
+    jumping = Class(league=show, name='Jumping')
+    db.session.add_all([clss, clss_closed, jumping])
 
     longname = 'really ' * 30
     regs = [Registrant(handler='Some guy with a super duper long name',
@@ -114,6 +154,7 @@ def populate():
                        size='M', grade=5, rescue=True, collie=False, junior=True)]
     entries = [Entry(registrant=r, clss=clss) for r in regs]
     entries += [Entry(registrant=r, clss=jumping) for r in regs[2:]]
+    entries += [Entry(registrant=r, clss=clss_closed) for r in regs[:4]]
     db.session.add_all(entries + regs)
 
     db.session.commit()

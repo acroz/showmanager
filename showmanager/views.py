@@ -5,13 +5,15 @@ from sqlalchemy.orm.exc import NoResultFound
 from datetime import datetime
 
 from .app import app, db
-from .models import Show, Class, Registrant, Entry
+from .models import Show, ShowDay, Class, Registrant, Entry
 from . import forms
 from .chits import chits as chitgen
 
 @app.route('/')
 def shows():
-    shows = Show.query.order_by(Show.start).all() 
+    shows = Show.query.join(ShowDay) \
+                      .order_by(ShowDay.date) \
+                      .all() 
     return render_template('shows.html', shows=shows)
 
 @app.route('/show/<int:id>')
@@ -32,7 +34,7 @@ def show_number(id):
         abort(404)
     show.assign_numbering()
     db.session.commit()
-    flash('Numbering assigned')
+    flash('Numbering assigned', 'success')
     return redirect(url_for('show', id=show.id))
 
 @app.route('/show/<int:id>/edit', methods=['GET', 'POST'])
@@ -50,20 +52,20 @@ def show_edit(id):
 
         # Update record
         show.name = form.name.data
-        show.start = form.start.data
-        show.end   = form.end.data
+        #show.start = form.start.data
+        #show.end   = form.end.data
         show.registration_start = form.registration_start.data
         show.registration_end   = form.registration_end.data
         db.session.commit()
 
-        flash('Show modified')
+        flash('Show modified', 'success')
 
         return redirect(url_for('show', id=show.id))
 
     # Populate form
     form.name.data = show.name
-    form.start.data = show.start
-    form.end.data = show.end
+    #form.start.data = show.start
+    #form.end.data = show.end
     form.registration_start.data = show.registration_start
     form.registration_end.data = show.registration_end
 
@@ -109,7 +111,7 @@ def register(id):
 
         db.session.commit()
 
-        flash('Thanks for registering')
+        flash('Thanks for registering', 'info')
         return redirect(url_for('show', id=show.id))
 
     return render_template('register.html', form=form, show=show)
@@ -133,16 +135,24 @@ def show_chits(id):
         abort(404)
 
     if not show.numbering_up_to_date:
-        flash('Please assign chit numbering first', 'danger')
+        flash('Assign chit numbering first', 'danger')
         return redirect(url_for('show', id=show.id))
 
-    query = Entry.query.join(Class) \
-                       .join(Registrant) \
-                       .filter(Class.show == show) \
-                       .order_by(Class.name) \
-                       .order_by(Entry.number)
+    query_single = Entry.query.join(Class) \
+                              .join(ShowDay) \
+                              .filter(ShowDay.show == show) \
+                              .join(Registrant) \
+                              .order_by(Class.name) \
+                              .order_by(Entry.number)
 
-    data = chitgen(query.all(), 'tiled' in request.args)
+    query_league = Entry.query.join(Class) \
+                              .filter(Class.league == show) \
+                              .join(Registrant) \
+                              .order_by(Class.name) \
+                              .order_by(Entry.number)
+
+    data = chitgen(query_league.all() + query_single.all(),
+                   'tiled' in request.args)
     
     response = make_response(data)
     response.mimetype = 'application/pdf'
