@@ -154,7 +154,7 @@ def round_chits(id):
 
     if not league.numbering_up_to_date:
         flash('Assign chit numbering first', 'danger')
-        return redirect(url_for('league', id=league.id))
+        return redirect(url_for('round', id=round.id))
     
     class_names = ['{} Round {}'.format(c.name, round.id) for c in league.classes]
 
