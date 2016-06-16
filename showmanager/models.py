@@ -92,10 +92,10 @@ def populate():
                     registration_end=datetime(2016, 8, 31))
     db.session.add(league)
 
-    league = League(name='Winter League Old',
-                    registration_start=datetime(2015, 6, 1),
-                    registration_end=datetime(2015, 8, 31))
-    db.session.add(league)
+    league_old = League(name='Winter League Old',
+                        registration_start=datetime(2015, 6, 1),
+                        registration_end=datetime(2015, 8, 31))
+    db.session.add(league_old)
 
     r1 = Round(date=date(2016, 9, 10), league=league)
     r2 = Round(date=date(2016, 9, 17), league=league)
@@ -104,6 +104,8 @@ def populate():
     r5 = Round(date=date(2016, 10, 8), league=league)
     r6 = Round(date=date(2016, 10, 15), league=league)
     db.session.add_all([r1, r2, r3, r4, r5, r6])
+
+    db.session.add(Round(date=date(2015, 12, 31), league=league_old))
 
     c1 = Class(name='Agility', league=league)
     c2 = Class(name='Jumping', league=league)
