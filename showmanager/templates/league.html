@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% import "bootstrap/utils.html" as utils %}
+{% block title %}{{ league.name }}{% endblock %}
+{% block pagecontent %}
+  <h1>{{ league.name }}</h1>
+  <p>
+    {% if league.registration_open %} 
+      <a href="{{ url_for('register', id=league.id) }}">
+          Register for this show
+      </a>
+    {% else %}
+      Registration for this show is closed.
+    {% endif %}
+  </p>
+  <p><a href="{{ url_for('league_edit', id=league.id) }}">Edit show</a></p>
+  <h2>Classes</h2>
+  <ul>
+  {% for class in league.classes %}
+    <li>{{ class.name }}</li>
+  {% endfor %}
+  </ul>
+  <h2>Rounds</h2>
+  <ul>
+  {% for round in league.rounds %}
+    <li><a href="{{ url_for('round', id=round.id) }}">{{ round.number }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}

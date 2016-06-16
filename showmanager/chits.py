@@ -102,7 +102,7 @@ def draw_box(canvas, x0, x1, y0, y1):
     path.close()
     path.draw()
 
-def chits(entries, tiled=False):
+def chits(class_names, entries, tiled=False):
     
     # Set up string stream to hold data
     stream = BytesIO()
@@ -128,78 +128,77 @@ def chits(entries, tiled=False):
     right10.fontSize = 12
     right10.leading  = 14
     styles.add(right10)
+
+    for name in class_names:
     
-    # Loop over all entries
-    for entry in entries:
-        
-        # Alias for compactness
-        reg = entry.registrant
-
-        # Start at margin
-        vpos = MARGIN
-
-        # Frame height should be single line height
-        hnormal = styles['Normal'].leading
-
-        # First row, add dog number and class name
-        f = frame(canvas, vpos, hnormal, horizontal=(0,0.5))
-        frame_add_text(canvas, f, 'Dog No: {}'.format(entry.number), styles['Normal'])
-        f = frame(canvas, vpos, hnormal, horizontal=(0.5,1))
-        frame_add_text(canvas, f, entry.clss.name, styles['Right'])
-        vpos += hnormal
-        
-        # Add a divider
-        vpos += 4
-        draw_hline(canvas, A6[1] - vpos)
-        vpos += 4
-
-        # Second row, add the handler
-        f = frame(canvas, vpos, hnormal)
-        frame_add_text(canvas, f, 'Handler: {}'.format(reg.handler), styles['Normal'])
-        vpos += hnormal
-
-        # Third row, add the dog and extra info
-        f = frame(canvas, vpos, hnormal, horizontal=(0,0.75))
-        frame_add_text(canvas, f, 'Dog: {}'.format(reg.dog), styles['Normal'])
-
-        # Extra info
-        hraj1 = str(reg.size)
-        if reg.rescue:
-            hraj1 += '/R'
-        if not reg.collie:
-            hraj1 += '/A'
-        if reg.junior:
-            hraj1 += '/J'
-        if reg.grade == 1:
-            hraj1 += '/1'
-        f = frame(canvas, vpos, hnormal, horizontal=(0.75,1))
-        frame_add_text(canvas, f, hraj1, styles['Right'])
-        vpos += hnormal
-
-
-        vpos += 20
-        box_height = 40
-        pad = (box_height - styles['Right12'].leading) / 2.
-        for i, text in enumerate(['DOG\'S TIME', 'COURSE TIME', 'TIME FAULTS',
-                                  'JUMPING FAULTS']):
-            f = frame(canvas, vpos, box_height, horizontal=(0,0.7), vpad=pad, hpad=10)
-            frame_add_text(canvas, f, text, styles['Right12'])
+        # Loop over all entries
+        for entry in entries:
+    
+            # Start at margin
+            vpos = MARGIN
+    
+            # Frame height should be single line height
+            hnormal = styles['Normal'].leading
+    
+            # First row, add dog number and class name
+            f = frame(canvas, vpos, hnormal, horizontal=(0,0.5))
+            frame_add_text(canvas, f, 'Dog No: {}'.format(entry.number), styles['Normal'])
+            f = frame(canvas, vpos, hnormal, horizontal=(0.5,1))
+            frame_add_text(canvas, f, name, styles['Right'])
+            vpos += hnormal
             
+            # Add a divider
+            vpos += 4
+            draw_hline(canvas, A6[1] - vpos)
+            vpos += 4
+    
+            # Second row, add the handler
+            f = frame(canvas, vpos, hnormal)
+            frame_add_text(canvas, f, 'Handler: {}'.format(entry.handler), styles['Normal'])
+            vpos += hnormal
+    
+            # Third row, add the dog and extra info
+            f = frame(canvas, vpos, hnormal, horizontal=(0,0.75))
+            frame_add_text(canvas, f, 'Dog: {}'.format(entry.dog), styles['Normal'])
+    
+            # Extra info
+            hraj1 = str(entry.size)
+            if entry.rescue:
+                hraj1 += '/R'
+            if not entry.collie:
+                hraj1 += '/A'
+            if entry.junior:
+                hraj1 += '/J'
+            if entry.grade == 1:
+                hraj1 += '/1'
+            f = frame(canvas, vpos, hnormal, horizontal=(0.75,1))
+            frame_add_text(canvas, f, hraj1, styles['Right'])
+            vpos += hnormal
+    
+    
+            vpos += 20
+            box_height = 40
+            pad = (box_height - styles['Right12'].leading) / 2.
+            for i, text in enumerate(['DOG\'S TIME', 'COURSE TIME', 'TIME FAULTS',
+                                      'JUMPING FAULTS']):
+                f = frame(canvas, vpos, box_height, horizontal=(0,0.7), vpad=pad, hpad=10)
+                frame_add_text(canvas, f, text, styles['Right12'])
+                
+                # Add score box
+                draw_box(canvas, MARGIN + WIDTH * 0.7, MARGIN + WIDTH,
+                                 A6[1] - vpos, A6[1] - vpos - box_height)
+                
+                vpos += box_height
+            
+            vpos = A6[1] - 30 - box_height
+            f = frame(canvas, vpos, box_height, horizontal=(0,0.7), vpad=pad, hpad=10)
+            frame_add_text(canvas, f, 'TOTAL FAULTS', styles['Right12'])
+    
             # Add score box
             draw_box(canvas, MARGIN + WIDTH * 0.7, MARGIN + WIDTH,
                              A6[1] - vpos, A6[1] - vpos - box_height)
-            
-            vpos += box_height
-        
-        vpos = A6[1] - 30 - box_height
-        f = frame(canvas, vpos, box_height, horizontal=(0,0.7), vpad=pad, hpad=10)
-        frame_add_text(canvas, f, 'TOTAL FAULTS', styles['Right12'])
-
-        # Add score box
-        draw_box(canvas, MARGIN + WIDTH * 0.7, MARGIN + WIDTH,
-                         A6[1] - vpos, A6[1] - vpos - box_height)
-
-        canvas.showPage()
+    
+            canvas.showPage()
 
     canvas.save()
 

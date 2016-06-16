@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block title %}Leagues{% endblock %}
+{% block pagecontent %}
+  <h1>Leagues</h1>
+  <ul>
+  {% for l in leagues %}
+    <li>
+      <a href="{{ url_for('league', id=l.id) }}">{{ l.name }}</a>
+    </li>
+  {% endfor %}
+  </ul>
+{% endblock %}

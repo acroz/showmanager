@@ -17,8 +17,8 @@ Bootstrap(app)
 nav = Nav()
 @nav.navigation()
 def topbar():
-    bar = Navbar('ShowManager',
-                 View('Shows', 'shows'))
+    bar = Navbar('LeagueManager',
+                 View('Leagues', 'leagues'))
     return bar
 nav.init_app(app)
 

@@ -45,7 +45,7 @@ class DateTimePickerWidget(object):
 
         return HTMLString(self.TEMPLATE.format(text=text))
 
-class ShowForm(Form):
+class LeagueForm(Form):
     name = StringField('Name', [validators.InputRequired()])
 
     start = DateField('Start', [validators.InputRequired()],
@@ -59,29 +59,16 @@ class ShowForm(Form):
                                        widget=DateTimePickerWidget())
     submit = SubmitField()
 
-def entry_form(show):
-    """
-    Generate an entry form class for this show.
-    """
-
-    choices = [(str(c.id), c.name) for c in show.classes]
-
-    class EntryForm(Form):
-        handler = StringField('Handler', [validators.InputRequired()])
-        dog     = StringField('Dog',     [validators.InputRequired()])
-        size    = SelectField('Size', [validators.InputRequired()],
-                              choices=[('S', 'Small'),
-                                       ('M', 'Medium'),
-                                       ('L', 'Large')])
-        grade = IntegerField('Grade', [validators.NumberRange(1, 7),
-                                       validators.InputRequired()])
-        rescue = BooleanField('Rescue Dog')
-        abc    = BooleanField('Anything But Collies')
-        junior = BooleanField('Junior Handler')
-        classes = SelectMultipleField('Classes', choices=choices,
-                                      validators=[validators.InputRequired()])
-        submit  = SubmitField()
-
-    return EntryForm
-
-
+class EntryForm(Form):
+    handler = StringField('Handler', [validators.InputRequired()])
+    dog     = StringField('Dog',     [validators.InputRequired()])
+    size    = SelectField('Size', [validators.InputRequired()],
+                          choices=[('L', 'Large'),
+                                   ('M', 'Medium'),
+                                   ('S', 'Small')])
+    grade = IntegerField('Grade', [validators.NumberRange(1, 7),
+                                   validators.InputRequired()])
+    rescue = BooleanField('Rescue Dog')
+    abc    = BooleanField('Anything But Collies')
+    junior = BooleanField('Junior Handler')
+    submit  = SubmitField()

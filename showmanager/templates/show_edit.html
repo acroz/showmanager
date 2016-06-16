@@ -1,7 +1,0 @@
-{% extends "layout_datetimepicker.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
-{% block title %}Edit - {{ show.name }}{% endblock %}
-{% block pagecontent %}
-  <h1>Edit - {{ show.name }}</h1>
-  {{ wtf.quick_form(form, action=url_for('show_edit', id=show.id)) }}
-{% endblock %}

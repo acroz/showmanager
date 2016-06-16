@@ -1,8 +1,7 @@
 {% extends "layout.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% block title %}Registration - {{ show.name }}{% endblock %}
+{% block title %}Registration - {{ league.name }}{% endblock %}
 {% block pagecontent %}
-  <h1>Registration - {{ show.name }}</h1>
-  <p>{{ show.date_string }}</p>
-  {{ wtf.quick_form(form, action=url_for('register', id=show.id)) }}
+  <h1>Registration - {{ league.name }}</h1>
+  {{ wtf.quick_form(form, action=url_for('register', id=league.id)) }}
 {% endblock %}

@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% import "bootstrap/utils.html" as utils %}
+{% block title %}{{ round.league.name }} - Round {{ round.number }}{% endblock %}
+{% block pagecontent %}
+  <h1>{{ round.league.name }} - Round {{ round.number }}</h1>
+  <p>{{ round.date }}</p>
+  <h2>Chits etc.</h2>
+
+  {% set utd = round.league.numbering_up_to_date %}
+
+  {% if utd %}
+    <p>Chit numbering is up to date.</p>
+  {% else %}
+    <p>Chit numbering is not up to date.</p>
+  {% endif %}
+
+  <form method="post" style="display: inline;"
+        action="{{ url_for('league_number', id=round.league.id) }}">
+    <input type="hidden" name="redirect" value="{{ request.path }}">
+    <button class="btn btn-default">
+      {{ utils.icon('wrench') }}
+      {% if utd %}
+        Reassign Numbering
+      {% else %}
+        Assign Numbering
+      {% endif %}
+    </button>
+  </form>
+
+  {% if utd %}
+  <div class="btn-group">
+    <a class="btn btn-default" role="button"
+       href="{{ url_for('round_chits', id=round.id) }}">
+      {{ utils.icon('download') }} Generate Chits
+    </a>
+    <button type="button" class="btn btn-default dropdown-toggle"
+            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      <li><a href="{{ url_for('round_chits', id=round.id) }}">A6 (Default)</a></li>
+      <li><a href="{{ url_for('round_chits', id=round.id, tiled=1) }}">A4 (Tiled)</a></li>
+    </ul>
+  </div>
+  {% endif %}
+{% endblock %}

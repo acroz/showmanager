@@ -3,30 +3,25 @@ from .app import db
 from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
 
-class Show(db.Model):
+class League(db.Model):
 
-    __tablename__ = 'shows'
+    __tablename__ = 'leagues'
 
     id   = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String)
+
     registration_start = db.Column(db.DateTime)
     registration_end   = db.Column(db.DateTime)
 
     last_entry = db.Column(db.DateTime, default=datetime.utcnow)
     numbering_assigned = db.Column(db.DateTime)
 
-    days = db.relationship('ShowDay', order_by='ShowDay.date',
-                           back_populates='show')
-    league_classes = db.relationship('Class', back_populates='league')
-
-    @property
-    def date_string(self):
-        if len(self.days) == 1:
-            return '{:%d/%m/%Y}'.format(self.days[0].date)
-        else:
-            tpl = '{:%d/%m/%Y} - {:%d/%m/%Y}'
-            return tpl.format(self.days[0].date, self.days[-1].date)
+    classes = db.relationship('Class', back_populates='league')
+    rounds  = db.relationship('Round', order_by='Round.date',
+                              back_populates='league')
+    entries = db.relationship('Entry', order_by='Entry.handler',
+                              back_populates='league')
 
     @property
     def registration_open(self):
@@ -41,57 +36,33 @@ class Show(db.Model):
             return False
         return self.last_entry < self.numbering_assigned
 
-    @property
-    def classes(self):
-        for day in self.days:
-            for clss in day.classes:
-                yield clss
-        for clss in self.league_classes:
-            yield clss
-
     def assign_numbering(self):
-        for clss in self.classes:
-            clss.assign_numbering()
+        for i, entry in enumerate(self.entries):
+            entry.number = i + 1
         self.numbering_assigned = datetime.utcnow()
 
-class ShowDay(db.Model):
-    __tablename__ = 'showdays'
+class Round(db.Model):
+    __tablename__ = 'rounds'
     id      = db.Column(db.Integer, primary_key=True)
     date    = db.Column(db.Date, nullable=False)
+    league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
+    league    = db.relationship('League', back_populates='rounds')
 
-    show_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
-    show    = db.relationship('Show', back_populates='days')
-
-    classes = db.relationship('Class', back_populates='day')
+    @property
+    def number(self):
+        sibling_ids = [round.id for round in self.league.rounds]
+        return sibling_ids.index(self.id) + 1
 
 class Class(db.Model):
     __tablename__ = 'classes'
     id      = db.Column(db.Integer, primary_key=True)
     name    = db.Column(db.String)
-    
-    # One-off classes are linked to a day
-    day_id = db.Column(db.Integer, db.ForeignKey('showdays.id'))
-    day    = db.relationship('ShowDay', back_populates='classes')
 
-    league_id = db.Column(db.Integer, db.ForeignKey('shows.id'))
-    league    = db.relationship('Show', back_populates='league_classes')
+    league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
+    league    = db.relationship('League', back_populates='classes')
 
-    @property
-    def show(self):
-        if self.league is not None:
-            return self.league
-        else:
-            return self.day.show
-
-    def assign_numbering(self):
-        query = Entry.query.join(Registrant) \
-                           .filter(Entry.clss == self) \
-                           .order_by(Registrant.handler)
-        for i, entry in enumerate(query.all()):
-            entry.number = i + 1
-
-class Registrant(db.Model):
-    __tablename__ = 'registrants'
+class Entry(db.Model):
+    __tablename__ = 'entries'
     id      = db.Column(db.Integer, primary_key=True)
     handler = db.Column(db.String)
     dog     = db.Column(db.String)
@@ -101,13 +72,9 @@ class Registrant(db.Model):
     collie  = db.Column(db.Boolean)
     junior  = db.Column(db.Boolean)
 
-class Entry(db.Model):
-    __tablename__ = 'entries'
-    id      = db.Column(db.Integer, primary_key=True)
-    registrant_id = db.Column(db.Integer, db.ForeignKey('registrants.id'))
-    registrant    = db.relationship('Registrant', backref=db.backref('entries', order_by=id))
-    clss_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
-    clss    = db.relationship('Class', backref=db.backref('entries', order_by=id))
+    league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
+    league    = db.relationship('League', back_populates='entries')
+
     number = db.Column(db.Integer)
 
 def initialise():
@@ -120,42 +87,46 @@ def populate():
     """
     from datetime import date, datetime
 
-    show = Show(name='Winter League',
-                registration_start=datetime(2016, 6, 1),
-                registration_end=datetime(2016, 6, 30))
-    wld1 = ShowDay(show=show, date=date(2016, 7, 10))
-    wld2 = ShowDay(show=show, date=date(2016, 7, 17))
-    wld3 = ShowDay(show=show, date=date(2016, 7, 24))
-    db.session.add_all([show, wld1, wld2, wld3])
+    league = League(name='Winter League 2016-17',
+                    registration_start=datetime(2016, 6, 1),
+                    registration_end=datetime(2016, 8, 31))
+    db.session.add(league)
 
-    show_closed = Show(name='Closed show',
-                       registration_start=datetime(2016, 5, 1),
-                       registration_end=datetime(2016, 5, 30))
-    cld1 = ShowDay(show=show_closed, date=date(2016, 6, 10))
-    cld2 = ShowDay(show=show_closed, date=date(2016, 6, 11))
-    db.session.add_all([show_closed, cld1, cld2])
+    league = League(name='Winter League Old',
+                    registration_start=datetime(2015, 6, 1),
+                    registration_end=datetime(2015, 8, 31))
+    db.session.add(league)
 
-    clss = Class(league=show, name='Agility')
-    clss_closed = Class(day=cld1, name='Agility')
-    jumping = Class(league=show, name='Jumping')
-    db.session.add_all([clss, clss_closed, jumping])
+    r1 = Round(date=date(2016, 9, 10), league=league)
+    r2 = Round(date=date(2016, 9, 17), league=league)
+    r3 = Round(date=date(2016, 9, 24), league=league)
+    r4 = Round(date=date(2016, 10, 1), league=league)
+    r5 = Round(date=date(2016, 10, 8), league=league)
+    r6 = Round(date=date(2016, 10, 15), league=league)
+    db.session.add_all([r1, r2, r3, r4, r5, r6])
+
+    c1 = Class(name='Agility', league=league)
+    c2 = Class(name='Jumping', league=league)
+    db.session.add_all([c1, c2])
 
     longname = 'really ' * 30
-    regs = [Registrant(handler='Some guy with a super duper long name',
-                       dog='Really ' + longname + 'long name',
-                       size='S', grade=1, rescue=True, collie=False, junior=True),
-            Registrant(handler='Andrew Crozier', dog='Caffrey',
-                       size='M', grade=2, rescue=False, collie=True, junior=True),
-            Registrant(handler='Lynda Crozier', dog='Sasha',
-                       size='L', grade=3, rescue=True, collie=True, junior=False),
-            Registrant(handler='Peter Crozier', dog='Jack',
-                       size='S', grade=4, rescue=False, collie=False, junior=False),
-            Registrant(handler='Lindsay Hutchinson', dog='Elvis',
-                       size='M', grade=5, rescue=True, collie=False, junior=True)]
-    entries = [Entry(registrant=r, clss=clss) for r in regs]
-    entries += [Entry(registrant=r, clss=jumping) for r in regs[2:]]
-    entries += [Entry(registrant=r, clss=clss_closed) for r in regs[:4]]
-    db.session.add_all(entries + regs)
+    entries = [Entry(handler='Some guy with a super duper long name',
+                     dog='Really ' + longname + 'long name',
+                     size='S', grade=1, rescue=True, collie=False, junior=True,
+                     league=league),
+               Entry(handler='Andrew Crozier', dog='Caffrey',
+                     size='M', grade=2, rescue=False, collie=True, junior=True,
+                     league=league),
+               Entry(handler='Lynda Crozier', dog='Sasha',
+                     size='L', grade=3, rescue=True, collie=True, junior=False,
+                     league=league),
+               Entry(handler='Peter Crozier', dog='Jack',
+                     size='S', grade=4, rescue=False, collie=False, junior=False,
+                     league=league),
+               Entry(handler='Lindsay Hutchinson', dog='Elvis',
+                     size='M', grade=5, rescue=True, collie=False, junior=True,
+                     league=league)]
+    db.session.add_all(entries)
 
     db.session.commit()
 
