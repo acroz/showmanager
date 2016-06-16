@@ -45,19 +45,31 @@ class DateTimePickerWidget(object):
 
         return HTMLString(self.TEMPLATE.format(text=text))
 
-class LeagueForm(Form):
-    name = StringField('Name', [validators.InputRequired()])
+def league_form(league):
 
-    start = DateField('Start', [validators.InputRequired()],
-                      widget=DatePickerWidget())
-    end   = DateField('End',   [validators.InputRequired()],
-                      widget=DatePickerWidget())
+    class LeagueForm(Form):
 
-    registration_start = DateTimeField('Registration Opens', 
-                                       widget=DateTimePickerWidget())
-    registration_end   = DateTimeField('Registration Closes',
-                                       widget=DateTimePickerWidget())
-    submit = SubmitField()
+        name = StringField('Name', [validators.InputRequired()])
+   
+        num_rounds = IntegerField('Number of Rounds',
+                                  [validators.NumberRange(min=1),
+                                   validators.InputRequired()])
+
+    for i in range(len(league.rounds)):
+        setattr(LeagueForm, 'round_{}'.format(i+1),
+                DateField('Round {} Date'.format(i+1),
+                          [validators.InputRequired()],
+                          widget=DatePickerWidget()))
+        
+    setattr(LeagueForm, 'registration_start',
+            DateTimeField('Registration Opens',
+                          widget=DateTimePickerWidget()))
+    setattr(LeagueForm, 'registration_end',
+            DateTimeField('Registration Opens',
+                          widget=DateTimePickerWidget()))
+    setattr(LeagueForm, 'submit', SubmitField())
+
+    return LeagueForm
 
 class EntryForm(Form):
     handler = StringField('Handler', [validators.InputRequired()])

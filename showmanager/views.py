@@ -2,7 +2,7 @@
 from flask import (render_template, make_response, request, abort, redirect,
                    url_for, flash)
 from sqlalchemy.orm.exc import NoResultFound
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .app import app, db
 from .models import League, Round, Class, Entry
@@ -49,27 +49,45 @@ def league_edit(id):
     except NoResultFound:
         abort(404)
 
-    form = forms.LeagueForm()
+    LeagueForm = forms.league_form(league)
+    form = LeagueForm()
 
     # Handle submitted data
     if request.method == 'POST' and form.validate():
 
         # Update record
         league.name = form.name.data
-        #league.start = form.start.data
-        #league.end   = form.end.data
         league.registration_start = form.registration_start.data
         league.registration_end   = form.registration_end.data
+        
+        # Delete extra rounds
+        extra = len(league.rounds) - form.num_rounds.data
+        if extra > 0:
+            flash('{} rounds deleted'.format(extra), 'info')
+            for round in league.rounds[-extra:]:
+                db.session.delete(round)
+        
+        # Add new rounds
+        new = form.num_rounds.data - len(league.rounds)
+        if new > 0:
+            flash('{} new rounds added'.format(new), 'info')
+            day = timedelta(days=1)
+            first = league.rounds[-1].date + day
+            for i in range(new):
+                round = Round(league=league, date=(first + i * day))
+                db.session.add(round)
+
         db.session.commit()
 
-        flash('Show modified', 'success')
+        flash('League updated', 'success')
 
-        return redirect(url_for('league', id=league.id))
+        return redirect(url_for('league_edit', id=league.id))
 
     # Populate form
     form.name.data = league.name
-    #form.start.data = league.start
-    #form.end.data = league.end
+    form.num_rounds.data = len(league.rounds)
+    for i, round in enumerate(league.rounds):
+        form['round_{}'.format(i+1)].data = round.date
     form.registration_start.data = league.registration_start
     form.registration_end.data = league.registration_end
 
