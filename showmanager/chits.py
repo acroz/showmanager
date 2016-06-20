@@ -162,17 +162,8 @@ def chits(class_names, entries, tiled=False):
             frame_add_text(canvas, f, 'Dog: {}'.format(entry.dog), styles['Normal'])
     
             # Extra info
-            hraj1 = str(entry.size)
-            if entry.rescue:
-                hraj1 += '/R'
-            if not entry.collie:
-                hraj1 += '/A'
-            if entry.junior:
-                hraj1 += '/J'
-            if entry.grade == 1:
-                hraj1 += '/1'
             f = frame(canvas, vpos, hnormal, horizontal=(0.75,1))
-            frame_add_text(canvas, f, hraj1, styles['Right'])
+            frame_add_text(canvas, f, entry.hraj1, styles['Right'])
             vpos += hnormal
     
     

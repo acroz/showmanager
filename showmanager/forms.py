@@ -88,6 +88,20 @@ def league_form(league):
                                   [validators.NumberRange(min=1),
                                    validators.InputRequired()])
 
+        scoring_rounds = IntegerField('Number of Scoring Rounds',
+                                      [validators.Optional()]) 
+
+        def validate(self):
+            if not super(LeagueForm, self).validate():
+                return False
+            if self.scoring_rounds.data > self.num_rounds.data:
+                errs = self.scoring_rounds.errors
+                errs.append('Number of scoring rounds cannot be more than the '
+                            'total number of rounds')
+                return False
+            else:
+                return True
+
     for i in range(len(league.rounds)):
         setattr(LeagueForm, 'round_{}'.format(i+1),
                 DateField('Round {} Date'.format(i+1),

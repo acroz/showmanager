@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% import "bootstrap/utils.html" as utils %}
+{% block title %}{{ course.round.league.name }} - {{ course.name }}{% endblock %}
+{% block pagecontent %}
+  <h1>{{ course.round.league.name }} - {{ course.name }}</h1>
+  <p>{{ course.round.date }}</p>
+  <p>Course time: {{ course.time }}</p>
+  {{ table }}
+{% endblock %}
