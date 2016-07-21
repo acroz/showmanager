@@ -12,6 +12,7 @@ app = flask.Flask(__name__)
 
 # Add bootstrap templates
 Bootstrap(app)
+app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
 # Create navbar
 nav = Nav()
@@ -28,4 +29,5 @@ dbfile = os.path.join(dirname, 'test.db')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + dbfile
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
