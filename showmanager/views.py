@@ -2,13 +2,13 @@ from flask import (render_template, make_response, request, abort, redirect,
                    url_for, flash)
 from sqlalchemy.orm.exc import NoResultFound
 from datetime import datetime, timedelta
-from collections import OrderedDict
 
 from .app import app, db
-from .models import League, Round, Class, Course, Entry, Score
+from .models import League, Round, Class, Course, Entry
 from .util import HTMLTable, PointsTable
 from . import forms
 from .chit import chits as chitgen
+
 
 @app.route('/')
 def leagues():
@@ -17,11 +17,13 @@ def leagues():
                           .all()
     return render_template('leagues.html', leagues=leagues)
 
+
 @app.route('/league/<int:id>')
 def league(id):
     print(id)
     league = League.query.filter_by(id=id).first_or_404()
     return render_template('league.html', league=league)
+
 
 @app.route('/league/<int:id>/number', methods=['POST'])
 def league_number(id):
@@ -34,6 +36,7 @@ def league_number(id):
         return redirect(request.form['redirect'])
     except KeyError:
         return redirect(url_for('league', id=league.id))
+
 
 @app.route('/league/<int:id>/edit', methods=['GET', 'POST'])
 def league_edit(id):
@@ -85,6 +88,7 @@ def league_edit(id):
 
     return render_template('league_edit.html', form=form, league=league)
 
+
 @app.route('/league/<int:id>/register', methods=['GET', 'POST'])
 def register(id):
 
@@ -95,7 +99,8 @@ def register(id):
         abort(404)
 
     if not league.registration_open:
-        flash('Sorry, registration for {} is closed'.format(league.name), 'danger')
+        flash('Sorry, registration for {} is closed'.format(league.name),
+              'danger')
         return redirect(url_for('league', id=league.id))
 
     # Build form
@@ -124,6 +129,7 @@ def register(id):
 
     return render_template('register.html', form=form, league=league)
 
+
 @app.route('/league/<int:id>/overall')
 def league_overall(id):
     league = League.query.filter_by(id=id).first_or_404()
@@ -139,6 +145,7 @@ def league_overall(id):
 
     return render_template('league_overall.html', league=league, table=table)
 
+
 @app.route('/round/<int:id>')
 def round(id):
     round = Round.query.filter_by(id=id).first_or_404()
@@ -152,6 +159,7 @@ def round(id):
             table.accumulate(score.entry, course.clss.name, score.points)
 
     return render_template('round.html', round=round, table=table)
+
 
 @app.route('/round/<int:id>/chits')
 def round_chits(id):
@@ -168,7 +176,8 @@ def round_chits(id):
         flash('Assign chit numbering first', 'danger')
         return redirect(url_for('round', id=round.id))
 
-    class_names = ['{} Round {}'.format(c.name, round.id) for c in league.classes]
+    class_names = ['{} Round {}'.format(c.name, round.id)
+                   for c in league.classes]
 
     data = chitgen(class_names, league.entries, 'tiled' in request.args)
 
@@ -177,6 +186,7 @@ def round_chits(id):
     response.headers['Content-Disposition'] = 'filename="chits.pdf"'
 
     return response
+
 
 @app.route('/class/<int:id>')
 def clss(id):
@@ -194,6 +204,7 @@ def clss(id):
 
     return render_template('class.html', clss=clss, table=table)
 
+
 @app.route('/course/<int:id>')
 def course(id):
 
@@ -202,7 +213,7 @@ def course(id):
     headers = ['Rank', 'Dog No.', 'Handler', 'Dog', 'HRAJ1', 'Time',
                'Time Faults', 'Jumping Faults', 'Total Faults', 'Points']
 
-    ff = lambda v: '{:.3f}'.format(v)
+    def ff(v): return '{:.3f}'.format(v)
 
     data = []
     for i, score in enumerate(course.scores):
@@ -210,7 +221,7 @@ def course(id):
         row = [i+1, entry.number,  entry.handler, entry.dog, entry.hraj1]
 
         if score.eliminated:
-            row += ['E'] *  4
+            row += ['E'] * 4
         elif score.noshow:
             row += ['NS'] * 4
         else:
