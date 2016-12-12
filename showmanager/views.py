@@ -1,4 +1,3 @@
-
 from flask import (render_template, make_response, request, abort, redirect,
                    url_for, flash)
 from sqlalchemy.orm.exc import NoResultFound
@@ -9,13 +8,13 @@ from .app import app, db
 from .models import League, Round, Class, Course, Entry, Score
 from .util import HTMLTable, PointsTable
 from . import forms
-from .chits import chits as chitgen
+from .chit import chits as chitgen
 
 @app.route('/')
 def leagues():
     leagues = League.query.join(Round) \
                           .order_by(Round.date) \
-                          .all() 
+                          .all()
     return render_template('leagues.html', leagues=leagues)
 
 @app.route('/league/<int:id>')
@@ -51,14 +50,14 @@ def league_edit(id):
         league.registration_start = form.registration_start.data
         league.registration_end = form.registration_end.data
         league.scoring_rounds = form.scoring_rounds.data
-        
+
         # Delete extra rounds
         extra = len(league.rounds) - form.num_rounds.data
         if extra > 0:
             flash('{} rounds deleted'.format(extra), 'info')
             for round in league.rounds[-extra:]:
                 db.session.delete(round)
-        
+
         # Add new rounds
         new = form.num_rounds.data - len(league.rounds)
         if new > 0:
@@ -101,7 +100,7 @@ def register(id):
 
     # Build form
     form = forms.EntryForm()
-    
+
     # Handle submitted data
     if request.method == 'POST' and form.validate():
 
@@ -131,7 +130,7 @@ def league_overall(id):
 
     table = PointsTable(league.entries,
                         [round.shortname for round in league.rounds],
-                        league.scoring_rounds) 
+                        league.scoring_rounds)
 
     for round in league.rounds:
         for course in round.courses:
@@ -146,8 +145,8 @@ def round(id):
     league = round.league
 
     table = PointsTable(league.entries,
-                        [clss.name for clss in league.classes]) 
-    
+                        [clss.name for clss in league.classes])
+
     for course in round.courses:
         for score in course.scores:
             table.accumulate(score.entry, course.clss.name, score.points)
@@ -168,11 +167,11 @@ def round_chits(id):
     if not league.numbering_up_to_date:
         flash('Assign chit numbering first', 'danger')
         return redirect(url_for('round', id=round.id))
-    
+
     class_names = ['{} Round {}'.format(c.name, round.id) for c in league.classes]
 
     data = chitgen(class_names, league.entries, 'tiled' in request.args)
-    
+
     response = make_response(data)
     response.mimetype = 'application/pdf'
     response.headers['Content-Disposition'] = 'filename="chits.pdf"'
@@ -184,11 +183,11 @@ def clss(id):
 
     clss = Class.query.filter_by(id=id).first_or_404()
     league = clss.league
-    
+
     table = PointsTable(league.entries,
                         [round.shortname for round in league.rounds],
-                        league.scoring_rounds) 
-    
+                        league.scoring_rounds)
+
     for course in clss.courses:
         for score in course.scores:
             table.accumulate(score.entry, course.round.shortname, score.points)
@@ -197,14 +196,14 @@ def clss(id):
 
 @app.route('/course/<int:id>')
 def course(id):
-   
+
     course = Course.query.filter_by(id=id).first_or_404()
 
     headers = ['Rank', 'Dog No.', 'Handler', 'Dog', 'HRAJ1', 'Time',
                'Time Faults', 'Jumping Faults', 'Total Faults', 'Points']
 
     ff = lambda v: '{:.3f}'.format(v)
-    
+
     data = []
     for i, score in enumerate(course.scores):
         entry = score.entry
