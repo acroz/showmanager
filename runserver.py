@@ -3,11 +3,11 @@
 import json
 from showmanager.views import app
 
-# Load settings file    
+# Load settings file
 with open('settings.json') as fp:
     settings = json.load(fp)
 
 app.secret_key = settings['secret_key']
-    
+
 # Run the flask app in debug mode
 app.run(debug=True)
