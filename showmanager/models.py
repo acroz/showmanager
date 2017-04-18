@@ -94,6 +94,8 @@ class Entry(db.Model):
 
     number = db.Column(db.Integer)
 
+    scores = db.relationship('Score', back_populates='entry')
+
     @property
     def hraj1(self):
         hraj1 = str(self.size)
@@ -121,6 +123,8 @@ class Course(db.Model):
 
     points_assigned = db.Column(db.DateTime)
 
+    scores = db.relationship('Score', back_populates='course')
+
     @property
     def name(self):
         return '{} {}'.format(self.clss.name, self.round.name)
@@ -137,7 +141,7 @@ class Course(db.Model):
                                  .order_by(Score.modified.desc()) \
                                  .first()
         
-        # Case when no courses have been applied
+        # Case when no scores have been applied
         if most_recent is None:
             # No points assignment to be done
             return True
@@ -156,23 +160,21 @@ class Course(db.Model):
         n_entrants = Entry.query.filter_by(league=self.round.league) \
                                 .count()
 
-        # Build query to get all scores for this course
-        query = Score.query.filter(Score.course == self)
-
-        # Get non-eliminated scores in correct order
-        scores = sorted(query.filter(Score.eliminated == False).all(),
-                        key=lambda s: s.order)
+        # Sort scores by 'order' attribute
+        key = lambda score: score.order
         
         # Assign points in order, with the best dog getting a number of points
         # equal to the number of participants in the league, and each successive
         # dog getting one point less
-        for i, s in enumerate(scores):
-            s.points = n_entrants - i
-            s.modified = now
+        for i, s in enumerate(sorted(scores, key=key)):
 
-        # Assign one point to eliminations
-        for s in query.filter(Score.eliminated == True).all():
-            s.points = 1
+            if s.noshow:
+                s.points = 0
+            elif s.eliminated:
+                s.points = 1
+            else:
+                s.points = n_entrants - i
+
             s.modified = now
 
         # Update points counter
@@ -180,62 +182,39 @@ class Course(db.Model):
         
         db.session.commit()
 
-    @property
-    def scores(self):
-
-        if not self.points_up_to_date:
-            self.update_points()
-
-        # Query for all participating dogs
-        q_participated = Score.query.filter(Score.course == self) \
-                                    .order_by(Score.points.desc())
-
-        # Query getting all entries to the league
-        q_all = db.session.query(Entry).filter_by(league=self.round.league)
-
-        # Subquery getting all entries already scored for this course
-        q_scored = Score.query.filter(Score.course_id == self.id) \
-                              .with_entities(Score.entry_id)
-
-        # Query getting all entrants that were not scored on this course
-        q_noshow = q_all.filter(~Entry.id.in_(q_scored))
-      
-        noshows = [ScoreNoShow(entry) for entry in q_noshow.all()]
-        
-        return q_participated.all() + noshows
-
 class Score(db.Model):
     __tablename__ = 'scores'
 
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'),
                           primary_key=True)
-    course = db.relationship('Course')
+    course = db.relationship('Course', back_populates='scores')
 
     entry_id = db.Column(db.Integer, db.ForeignKey('entries.id'),
                          primary_key=True)
-    entry = db.relationship('Entry')
+    entry = db.relationship('Entry', back_populates='scores')
 
     faults = db.Column(db.Integer)
     time   = db.Column(db.Float)
-    eliminated = db.Column(db.Boolean, nullable=False)
-    noshow = False
+    eliminated = db.Column(db.Boolean, default=False)
 
-    created = db.Column(db.DateTime, default=datetime.now)
     modified = db.Column(db.DateTime, default=datetime.now,
                          onupdate=datetime.now)
+    points = db.Column(db.Integer)
 
-    points = db.Column(db.Integer, default=-1)
+    @property
+    def noshow(self):
+        return self.time is None and not self.eliminated
     
     @property
     def time_faults(self):
-        if self.eliminated:
+        if self.eliminated or self.noshow:
             return None
         time_over = self.time - self.course.time
         return time_over if time_over > 0. else 0.
 
     @property
     def total_faults(self):
-        if self.eliminated:
+        if self.eliminated or self.noshow:
             return None
         return self.faults + self.time_faults
 
@@ -248,25 +227,14 @@ class Score(db.Model):
         """
         Score for ordering all participants by faults and time.
         """
-        if self.eliminated:
+        if self.noshow:
+            return -2e10
+        elif self.eliminated:
             return -1e10
         elif self.clear_round:
             return self.time - self.course.time
         else:
             return self.total_faults
-
-class ScoreNoShow(object):
-    def __init__(self, entry):
-        self.entry = entry
-        self.points = 0
-        self.faults = None
-        self.time = None
-        self.eliminated = None
-        self.time_faults = None
-        self.total_faults = None
-        self.noshow = True
-        self.created = None
-        self.modified = None
 
 def initialise():
     """Create the schema"""
