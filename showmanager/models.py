@@ -1,20 +1,17 @@
-
 from .app import db
 from datetime import datetime
-import functools
-from sqlalchemy import case, select
-from sqlalchemy.ext.hybrid import hybrid_property
+
 
 class League(db.Model):
 
     __tablename__ = 'leagues'
 
-    id   = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String)
 
     registration_start = db.Column(db.DateTime)
-    registration_end   = db.Column(db.DateTime)
+    registration_end = db.Column(db.DateTime)
 
     last_entry = db.Column(db.DateTime, default=datetime.utcnow)
     numbering_assigned = db.Column(db.DateTime)
@@ -22,8 +19,8 @@ class League(db.Model):
     scoring_rounds = db.Column(db.Integer)
 
     classes = db.relationship('Class', back_populates='league')
-    rounds  = db.relationship('Round', order_by='Round.date',
-                              back_populates='league')
+    rounds = db.relationship('Round', order_by='Round.date',
+                             back_populates='league')
     entries = db.relationship('Entry', order_by='Entry.handler',
                               back_populates='league')
 
@@ -45,15 +42,16 @@ class League(db.Model):
             entry.number = i + 1
         self.numbering_assigned = datetime.utcnow()
 
+
 class Round(db.Model):
     __tablename__ = 'rounds'
-    id      = db.Column(db.Integer, primary_key=True)
-    date    = db.Column(db.Date, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
-    league    = db.relationship('League', back_populates='rounds')
+    league = db.relationship('League', back_populates='rounds')
 
     courses = db.relationship('Course', back_populates='round')
-                              #order_by='Course.clss.name')
+    # order_by='Course.clss.name')
 
     @property
     def number(self):
@@ -68,29 +66,31 @@ class Round(db.Model):
     def shortname(self):
         return 'R{}'.format(self.number)
 
+
 class Class(db.Model):
     __tablename__ = 'classes'
-    id      = db.Column(db.Integer, primary_key=True)
-    name    = db.Column(db.String)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
 
     league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
-    league    = db.relationship('League', back_populates='classes')
+    league = db.relationship('League', back_populates='classes')
 
     courses = db.relationship('Course', back_populates='clss')
 
+
 class Entry(db.Model):
     __tablename__ = 'entries'
-    id      = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     handler = db.Column(db.String)
-    dog     = db.Column(db.String)
-    size    = db.Column(db.Enum('S', 'M', 'L'))
-    grade   = db.Column(db.Integer)
-    rescue  = db.Column(db.Boolean)
-    collie  = db.Column(db.Boolean)
-    junior  = db.Column(db.Boolean)
+    dog = db.Column(db.String)
+    size = db.Column(db.Enum('S', 'M', 'L'))
+    grade = db.Column(db.Integer)
+    rescue = db.Column(db.Boolean)
+    collie = db.Column(db.Boolean)
+    junior = db.Column(db.Boolean)
 
     league_id = db.Column(db.Integer, db.ForeignKey('leagues.id'))
-    league    = db.relationship('League', back_populates='entries')
+    league = db.relationship('League', back_populates='entries')
 
     number = db.Column(db.Integer)
 
@@ -109,6 +109,7 @@ class Entry(db.Model):
             hraj1 += '/1'
         return hraj1
 
+
 class Course(db.Model):
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
@@ -118,7 +119,7 @@ class Course(db.Model):
 
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
     clss = db.relationship('Class', back_populates='courses')
-    
+
     time = db.Column(db.Float)
 
     points_assigned = db.Column(db.DateTime)
@@ -140,7 +141,7 @@ class Course(db.Model):
         most_recent = Score.query.filter(Score.course == self) \
                                  .order_by(Score.modified.desc()) \
                                  .first()
-        
+
         # Case when no scores have been applied
         if most_recent is None:
             # No points assignment to be done
@@ -151,7 +152,7 @@ class Course(db.Model):
         return self.points_assigned >= most_recent.modified
 
     def update_points(self):
-        
+
         # Get the current time once to ensure all assigned times here are
         # the same
         now = datetime.now()
@@ -160,13 +161,10 @@ class Course(db.Model):
         n_entrants = Entry.query.filter_by(league=self.round.league) \
                                 .count()
 
-        # Sort scores by 'order' attribute
-        key = lambda score: score.order
-        
         # Assign points in order, with the best dog getting a number of points
-        # equal to the number of participants in the league, and each successive
-        # dog getting one point less
-        for i, s in enumerate(sorted(scores, key=key)):
+        # equal to the number of participants in the league, and each
+        # successive dog getting one point less
+        for i, s in enumerate(sorted(scores, key=lambda score: score.order)):
 
             if s.noshow:
                 s.points = 0
@@ -179,8 +177,9 @@ class Course(db.Model):
 
         # Update points counter
         self.points_assigned = now
-        
+
         db.session.commit()
+
 
 class Score(db.Model):
     __tablename__ = 'scores'
@@ -194,7 +193,7 @@ class Score(db.Model):
     entry = db.relationship('Entry', back_populates='scores')
 
     faults = db.Column(db.Integer)
-    time   = db.Column(db.Float)
+    time = db.Column(db.Float)
     eliminated = db.Column(db.Boolean, default=False)
 
     modified = db.Column(db.DateTime, default=datetime.now,
@@ -204,7 +203,7 @@ class Score(db.Model):
     @property
     def noshow(self):
         return self.time is None and not self.eliminated
-    
+
     @property
     def time_faults(self):
         if self.eliminated or self.noshow:
@@ -236,9 +235,11 @@ class Score(db.Model):
         else:
             return self.total_faults
 
+
 def initialise():
     """Create the schema"""
     db.create_all()
+
 
 def populate():
     """
@@ -283,13 +284,13 @@ def populate():
                      size='L', grade=3, rescue=True, collie=True, junior=False,
                      league=league),
                Entry(handler='Peter Crozier', dog='Jack',
-                     size='S', grade=4, rescue=False, collie=False, junior=False,
-                     league=league),
+                     size='S', grade=4, rescue=False, collie=False,
+                     junior=False, league=league),
                Entry(handler='Lindsay Hutchinson', dog='Elvis',
                      size='M', grade=5, rescue=True, collie=False, junior=True,
                      league=league)]
     db.session.add_all(entries)
-    
+
     course = Course(clss=c1, round=r1, time=29.)
     db.session.add(course)
 
@@ -305,6 +306,7 @@ def populate():
     db.session.add(score)
 
     db.session.commit()
+
 
 if __name__ == '__main__':
     import sys
